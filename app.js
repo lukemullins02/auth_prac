@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const path = require("node:path");
 const { Pool } = require("pg");
 const express = require("express");
@@ -6,11 +8,11 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 
 const pool = new Pool({
-  host: "localhost", // or wherever the db is hosted
+  host: "localhost",
   user: `${process.env.USERNAME}`,
   database: `${process.env.DB}`,
   password: `${process.env.PASSWORD}`,
-  port: 5432, // The default port
+  port: 5432,
 });
 
 const app = express();
@@ -22,6 +24,20 @@ app.use(passport.session());
 app.use(express.urlencoded({ extended: false }));
 
 app.get("/", (req, res) => res.render("index"));
+
+app.get("/sign-up", (req, res) => res.render("sign-up-form"));
+
+app.post("/sign-up", async (req, res, next) => {
+  try {
+    await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [
+      req.body.username,
+      req.body.password,
+    ]);
+    res.redirect("/");
+  } catch (err) {
+    return next(err);
+  }
+});
 
 app.listen(3000, (error) => {
   if (error) {
